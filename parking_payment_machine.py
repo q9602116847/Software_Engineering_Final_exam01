@@ -1,18 +1,28 @@
 from datetime import datetime
+import math
 def money_balance(usertotal,total):#計算餘額(找零)
-    if usertotal-total<0:
-        print("金額不足")
-        givechange=0
+    givechange=usertotal-total 
+    if givechange<0:
+        print("金額不足",-givechange)
         return False
     else:
-        givechange=usertotal-total    
         return givechange
-def parking_costs(five,ten,fifty):#使用者投入的硬幣
-    usertotal=five*5+ten*10+fifty*50
-    return usertotal
-def parking_times(pstart,pend):#計算停車時間
-    ptime=(pend-pstart).seconds
-    return (ptime/60//30)+1
+def parking_costs(five,ten,fifty,fake_5,fake_10,fake_50):#使用者投入的硬幣
+    if fake_5>0 or fake_10>0 or fake_50>0:#偵測到非法硬幣時回傳false
+        return False
+    else:
+        usertotal=five*5+ten*10+fifty*50
+        return usertotal
+def displayparking_time(pstart,pend):#顯示停車時間
+    ptime=pend-pstart
+    days=ptime.days
+    hours=ptime.seconds//3600
+    min=(ptime.seconds%3600)//60
+    print(f"共停了{days}天{hours}小時{min}分")    
+def parking_times(pstart,pend):#計算停車時間費用(計算有幾個半小時)
+    ptime=(pend-pstart).total_seconds()//60/30
+    pt=math.ceil(ptime)
+    return pt
 def parking_money(parking_time,wday):#判斷平日和假日
     if wday>=0 and wday<=4:#平日計費
         total=parking_time*15
@@ -23,16 +33,16 @@ def parking_money(parking_time,wday):#判斷平日和假日
         if total>=420:
             total=420
     return total
-def parking_payment_machine(carnum,five,ten,fifty,pstart,pend):
+def parking_payment_machine(carnum,five,ten,fifty,fake_5,fake_10,fake_50,pstart,pend):
     I_wday=pstart.weekday()#進場星期
     O_wday=pend.weekday()#退場星期
+    displayparking_time(pstart,pend)
     total=0
     givechange=0
     if I_wday==O_wday:#當日停車
         wday = I_wday
         parking_time=parking_times(pstart,pend)#計算停車時間
         total=parking_money(parking_time,wday)#計算停車費用
-        usertotal=parking_costs(five,ten,fifty)#計算投入金額
     else:# 跨日停車
         # 計算第一天停車費用
         wday = I_wday
@@ -47,21 +57,57 @@ def parking_payment_machine(carnum,five,ten,fifty,pstart,pend):
         wday=O_wday
         parking_time=parking_times(datetime(pend.year,pend.month,pend.day),pend)
         total+= parking_money(parking_time,wday)#計算總停車費
-        usertotal=parking_costs(five,ten,fifty)#計算投入金額
+    usertotal=parking_costs(five,ten,fifty,fake_5,fake_10,fake_50)#計算投入金額
     givechange=money_balance(usertotal,total)#找錢
     if givechange==False:
-        total=0
-        usertotal=0
-        givechange=0
         print("金額錯誤取消付款")
+        print("退還已投入金額",f"${five}枚5元{ten}枚10元{fifty}枚50元") 
+    elif usertotal==False:
+        print("偵測到非法硬幣")
+        print("退還已投入金額",f"${five}枚5元{ten}枚10元{fifty}枚50元")    
     else:        
         print("車號",carnum)
         print("停車費共",total,"元","投入金額",usertotal,"找",givechange,"元")
-parking_start=datetime(2023,5,25,23,8)
-parking_end=datetime(2023,5,25,23,10)
-parking_payment_machine(512,0,3,1,parking_start,parking_end)
-parking_start = datetime(2023,5,25,1,30)
-parking_end = datetime(2023,5,27,4,30)
-parking_payment_machine(512,0,0,0,parking_start,parking_end)
+parking_start=datetime(2023,5,25,23,0)
+parking_end=datetime(2023,5,25,23,40)
+parking_payment_machine(512,0,3,1,0,0,0,parking_start,parking_end)
+parking_start = datetime(2023,5,25,0,0)
+parking_end = datetime(2023,5,27,5,0)
+parking_payment_machine(512,0,0,100,0,0,0,parking_start,parking_end)
 
-       
+#單元測試
+#找零功能測試(3pass)
+def test_unit_money_balance():
+    assert money_balance(1000,100)==900#投入1000 停車費100 找900
+def test_unit_money_balance1():
+    assert money_balance(50,30)==20#投入50 停車費30 找20
+def test_unit_money_balance2():
+    assert money_balance(100,100)==0#投入100 停車費100 找0    
+#找零功能錯誤測試(3 fail) 
+def test_unit_money_balance3():
+    assert money_balance(50,100)==-50#投入50 停車費100 回傳false
+def test_unit_money_balance4():
+    assert money_balance(0,100)==-100#投入0 停車費100 回傳false
+def test_unit_money_balance5():
+    assert money_balance(1000,100)==1100 #投入1000 停車費100 找900    
+#使用者投入硬幣測試(5 pass)
+def test_parking_costs():
+    assert parking_costs(1,1,0,0,0,0)==15#投入5元*1 10元*1 50元*0 共投入15元
+def test_parking_costs0():
+    assert parking_costs(1,0,1,0,0,0)==55#投入5元*1 10元*0 50元*1 共投入55元    
+def test_parking_costs1():
+    assert parking_costs(1,1,1,0,0,0)==65#投入5元*1 10元*1 50元*1 共投入65元
+def test_parking_costs2():
+    assert parking_costs(1,1,1,1,0,0)==False#投入5元*1 10元*1 50元*1 非法硬幣5元 偵測到非法硬幣回傳false    
+def test_parking_costs3():
+    assert parking_costs(1,1,20,0,0,0)==1015#投入5元*1 10元*1 50元*20 共投入1015元
+#使用者投入硬幣錯誤測試(3 fail)
+def test_parking_costs4():
+    assert parking_costs(0,0,0,1,1,0)==15#投入非法5元*1 非法10元*1  共投入15元
+def test_parking_costs5():
+    assert parking_costs(0,0,0,1,0,0)==5#投入非法5元*1  共投入5元
+
+def test_parking_times1():
+    test_s=datetime(2023,5,25,23,8)
+    test_e=datetime(2023,5,25,23,9)
+    assert parking_times(test_s,test_e)==1       
