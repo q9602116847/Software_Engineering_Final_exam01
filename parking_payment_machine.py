@@ -71,27 +71,32 @@ def check(usertotal,total,five,ten,fifty):
         if five>0 or ten>0 or fifty>0:
             print("退還已投入金額",f"${five}枚5元{ten}枚10元{fifty}枚50元")
         total=0
+        return False
     elif total>usertotal:
         print("付款金額錯誤")
         print(f"差{total-usertotal}元")
         print("取消付款!!")
         if five>0 or ten>0 or fifty>0:
-                print("退還已投入金額",f"${five}枚5元{ten}枚10元{fifty}枚50元")
+            print("退還已投入金額",f"${five}枚5元{ten}枚10元{fifty}枚50元")
+        return False        
     else:
+        givechange=0
         givechange=money_balance(usertotal,total)#找錢
-        print("停車費共",total,"元","投入金額",usertotal,"找",givechange,"元")     
+        print("停車費共",total,"元","投入金額",usertotal,"找",givechange,"元")
+        return True
+
 def parking_payment_machine(carnum,five,ten,fifty,fake_5,fake_10,fake_50,pstart,pend):#停車場繳費系統
     iscarnum=carnumber(carnum)
     if iscarnum==False:
+        print("查無此車牌 需輸入完整的車牌號碼")
         return False#查無車牌取消付款
     else:
         displayparking_time(pstart,pend)#顯示停車時間
-        givechange=0
         total=parking_money(pstart,pend)
         usertotal=parking_costs(five,ten,fifty,fake_5,fake_10,fake_50)#計算投入金額
-        check(usertotal,total,five,ten,fifty)
+        settlement=check(usertotal,total,five,ten,fifty)
         print("-----------------------------------------------------------")
-        return total
+        return settlement
 parking_start=datetime(2023,5,25,23,0)
 parking_end=datetime(2023,5,25,23,1)
 parking_payment_machine("ABC-1234",0,0,0,0,0,0,parking_start,parking_end)
@@ -103,16 +108,16 @@ parking_payment_machine("IC8-7630",0,0,100,0,0,0,parking_start,parking_end)
 #找零功能測試(3 pass)
 def test_unit_money_balance():
     assert money_balance(1000,100)==900#投入1000 停車費100 找900
-def test_unit_money_balance1():
+def test_unit_money_balance0():
     assert money_balance(50,30)==20#投入50 停車費30 找20
-def test_unit_money_balance2():
+def test_unit_money_balance1():
     assert money_balance(100,100)==0#投入100 停車費100 找0    
 #找零功能錯誤測試(3 fail) 
-def test_unit_money_balance3():
+def test_unit_money_balance2():
     assert money_balance(50,100)==50#投入50 停車費100 回傳0
-def test_unit_money_balance4():
+def test_unit_money_balance3():
     assert money_balance(0,100)==-100#投入0 停車費100 回傳0
-def test_unit_money_balance5():
+def test_unit_money_balance4():
     assert money_balance(1000,100)==1100 #投入1000 停車費100 找900    
 #使用者投入硬幣測試(5 pass)
 def test_unit_parking_costs():
@@ -135,41 +140,148 @@ def test_unit_parking_money():
     test_s=datetime(2023,5,25,23,0)
     test_e=datetime(2023,5,25,23,1)
     assert parking_money(test_s,test_e)==15#平日停1分鐘 共15元
-def test_unit_parking_money1():
+def test_unit_parking_money0():
     test_s=datetime(2023,5,21,23,0)
     test_e=datetime(2023,5,22,23,0)
     assert parking_money(test_s,test_e)==340#假日(5/21)1小時40+ 平日(5/22)23小時300 共340元
-def test_unit_parking_money2():
+def test_unit_parking_money1():
     test_s=datetime(2023,5,21,23,0)
     test_e=datetime(2023,5,23,0,1)
     assert parking_money(test_s,test_e)==355#假日(5/21)1小時40+ 平日(5/22號)300+平日(5/23)1分15 共355元        
 #計算停車費錯誤測試(2 fail)
-def test_unit_parking_money3():
+def test_unit_parking_money2():
     test_s=datetime(2023,4,1,23,0)
     test_e=datetime(2023,4,1,23,1)
     assert parking_money(test_s,test_e)==15#假日(4/1)1分鐘 20元
-def test_unit_parking_money4():
+def test_unit_parking_money3():
     test_s=datetime(2023,4,2,23,25)
     test_e=datetime(2023,4,2,23,56)
     assert parking_money(test_s,test_e)==20#假日(4/2)31分鐘 400元
-#輸入車牌測試(4 pass)   
+#輸入車牌測試(4 pass)需輸入完整的車牌號碼   
 def test_unit_carnumber():
     carnum="ABC-1234"
     assert carnumber(carnum)==True
-def test_unit_carnumber1():
+def test_unit_carnumber0():
     carnum="QWE-1234"
     assert carnumber(carnum)==True
-def test_unit_carnumber2():
+def test_unit_carnumber1():
     carnum="IC8-7630"
     assert carnumber(carnum)==True
-def test_unit_carnumber3():
+def test_unit_carnumber2():
     carnum="1BC-1243"
     assert carnumber(carnum)==False
 #輸入車牌錯誤測試(2 fail)
-def test_unit_carnumber4():
+def test_unit_carnumber3():
     carnum="A"
     assert carnumber(carnum)==True
-def test_unit_carnumber5():
+def test_unit_carnumber4():
     carnum="Ic8-7630"
-    assert carnumber(carnum)==True    
+    assert carnumber(carnum)==True
+#停車繳費系統整體測試 (6 pass)      
+def test_parking_payment_machine():
+    carnumber="ABC-1234"
+    five=0
+    ten=0
+    fifty=0
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,25,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #沒付款OR付款金額不足 回傳false 繳費失敗
+    assert test_all==False#平日30分鐘15元 
+def test_parking_payment_machine0():
+    carnumber="QWE-1234"
+    five=1
+    ten=1
+    fifty=0
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,25,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #繳費成功 
+    assert test_all==True#平日30分鐘15元
+def test_parking_payment_machine1():
+    carnumber="IC8-7630"
+    five=1
+    ten=1
+    fifty=0
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,25,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #繳費成功 
+    assert test_all==True#平日30分鐘15元
+def test_parking_payment_machine2():
+    carnumber="B567-9010"
+    five=0
+    ten=0
+    fifty=7
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,24,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #繳費成功 
+    assert test_all==True#跨日計算 第一天(平日) 1H 30元  第二天(平日) 23.5H 300   
+def test_parking_payment_machine3():
+    carnumber="B5"
+    five=0
+    ten=0
+    fifty=7
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,24,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #查無此車牌 需輸入完整的車牌號碼 繳費失敗
+    assert test_all==False
+def test_parking_payment_machine4():
+    carnumber="B567-9010"
+    five=0
+    ten=0
+    fifty=6
+    fake_5=0
+    fake_10=0
+    fake_50=1
+    test_start=datetime(2023,5,24,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #偵測到非法硬幣 回傳false 繳費失敗
+    assert test_all==False
+#停車繳費系統整體錯誤測試(2 fail)
+def test_parking_payment_machine5():
+    carnumber="B567-9010"
+    five=0
+    ten=0
+    fifty=6
+    fake_5=0
+    fake_10=0
+    fake_50=1
+    test_start=datetime(2023,5,24,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #偵測到非法硬幣 回傳false 繳費失敗
+    assert test_all==True
+def test_parking_payment_machine6():
+    carnumber="B567-9010"
+    five=0
+    ten=0
+    fifty=6
+    fake_5=0
+    fake_10=0
+    fake_50=0
+    test_start=datetime(2023,5,24,23,0)
+    test_end=datetime(2023,5,25,23,30)
+    test_all=parking_payment_machine(carnumber,five,ten,fifty,fake_5,fake_10,fake_50,test_start,test_end)
+    #停車費330 user只投入300 回傳false 繳費失敗
+    assert test_all==True    
 
+  
