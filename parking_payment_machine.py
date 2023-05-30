@@ -1,9 +1,8 @@
 from datetime import datetime
 import math
-def carnumber(carnum):#輸入車牌
+def Input_car_number(carnum):#輸入車牌
     cardatabase={"ABC-1234","QWE-1234","IC8-7630","B567-9010"}#假設停車場有這些車輛
     if carnum in cardatabase:
-        print("車牌號碼",carnum)
         return True
     else:
         print("找不到此車牌")
@@ -84,13 +83,16 @@ def check(usertotal,total,five,ten,fifty):
         givechange=money_balance(usertotal,total)#找錢
         print("停車費共",total,"元","投入金額",usertotal,"找",givechange,"元")
         return True
-
+    
 def parking_payment_machine(carnum,five,ten,fifty,fake_5,fake_10,fake_50,pstart,pend):#停車場繳費系統
-    iscarnum=carnumber(carnum)
+    print("-----------------------------------------------------------")
+    iscarnum=Input_car_number(carnum)
     if iscarnum==False:
         print("查無此車牌 需輸入完整的車牌號碼")
         return False#查無車牌取消付款
     else:
+        print("-----------------------------------------------------------")
+        print("車牌號碼",carnum)
         displayparking_time(pstart,pend)#顯示停車時間
         total=parking_money(pstart,pend)
         usertotal=parking_costs(five,ten,fifty,fake_5,fake_10,fake_50)#計算投入金額
@@ -103,7 +105,7 @@ parking_payment_machine("ABC-1234",0,0,0,0,0,0,parking_start,parking_end)
 parking_start = datetime(2023,5,25,0,0)
 parking_end = datetime(2023,5,27,5,0)
 parking_payment_machine("IC8-7630",0,0,100,0,0,0,parking_start,parking_end)
-
+parking_payment_machine("I",0,0,100,0,0,0,parking_start,parking_end)
 #單元測試
 #找零功能測試(3 pass)
 def test_unit_money_balance():
@@ -160,23 +162,23 @@ def test_unit_parking_money3():
 #輸入車牌測試(4 pass)需輸入完整的車牌號碼   
 def test_unit_carnumber():
     carnum="ABC-1234"
-    assert carnumber(carnum)==True
+    assert Input_car_number(carnum)==True
 def test_unit_carnumber0():
     carnum="QWE-1234"
-    assert carnumber(carnum)==True
+    assert Input_car_number(carnum)==True
 def test_unit_carnumber1():
     carnum="IC8-7630"
-    assert carnumber(carnum)==True
+    assert Input_car_number(carnum)==True
 def test_unit_carnumber2():
     carnum="1BC-1243"
-    assert carnumber(carnum)==False
+    assert Input_car_number(carnum)==False
 #輸入車牌錯誤測試(2 fail)
 def test_unit_carnumber3():
     carnum="A"
-    assert carnumber(carnum)==True
+    assert Input_car_number(carnum)==True
 def test_unit_carnumber4():
     carnum="Ic8-7630"
-    assert carnumber(carnum)==True
+    assert Input_car_number(carnum)==True
 #停車繳費系統整體測試 (6 pass)      
 def test_parking_payment_machine():
     carnumber="ABC-1234"
